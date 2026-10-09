@@ -1,39 +1,39 @@
 # Aion2MacBridge
 
-**Faire tourner AION 2 sur un Mac Apple Silicon avec CrossOver, Rosetta et la connexion Steam native.**
+**Run AION 2 on Apple Silicon Macs using CrossOver, Rosetta, and your native Steam session.**
 
-J’ai tout fait pour pouvoir jouer à AION 2 sur Mac. Comme je n’avais pas trouvé de solution qui fonctionnait sur ma configuration, j’ai cherché et expérimenté avec l’aide de l’IA jusqu’à réussir à lancer le jeu et à jouer. Voici le patch et la marche à suivre pour reproduire cette configuration.
+I tried everything to play AION 2 on my Mac. Since I couldn't find a solution that worked on my setup, I kept researching and experimenting with the help of AI until I could launch the game and play. Here is my patch and the guide to reproduce that setup.
 
-Ce projet s’appuie sur le travail de [NotProton](https://github.com/NotProtonNot/NotProton). Il ajoute une construction locale du patch de chargement pour le moteur Intel et des scripts qui choisissent explicitement Rosetta, tout en utilisant la session Steam du Mac. **Aucune copie supplémentaire du jeu n’est nécessaire.**
+This project builds on [NotProton](https://github.com/NotProtonNot/NotProton). It adds a local build of the loader patch for the Intel engine and scripts that explicitly select Rosetta while using your Mac's existing Steam session. **No extra copy of the game is required.**
 
-## Ce qui a été validé
+## What has been verified
 
-Le propriétaire du dépôt a confirmé pouvoir jouer sur sa configuration le 9 octobre 2026 :
+The repository owner confirmed playing on the following configuration on October 9, 2026:
 
-| Composant | Configuration testée |
+| Component | Tested configuration |
 | --- | --- |
-| Mac | Apple Silicon M4 Max, 64 Go de mémoire |
+| Mac | Apple Silicon M4 Max, 64 GB RAM |
 | macOS | 27.0, build 26A428 |
-| CrossOver Preview | 27.0.0.41069, archive du 6 octobre 2026 |
-| NotProton | 1.0.3 ; sources du patch au commit `599ebf6a4cfa52b46c03299170ccbde8f8fe2205` |
-| Jeu | AION 2 sur Steam, App ID `3393110` |
-| Exécution | Moteur x86_64 de CrossOver via Rosetta, Steam natif connecté |
+| CrossOver Preview | 27.0.0.41069, October 6, 2026 archive |
+| NotProton | 1.0.3; patch sources at commit `599ebf6a4cfa52b46c03299170ccbde8f8fe2205` |
+| Game | AION 2 on Steam, App ID `3393110` |
+| Runtime | CrossOver x86_64 engine through Rosetta, with native Steam signed in |
 
-L’initialisation de l’API Steam et son état connecté ont également été vérifiés. Le chemin ARM/FEX utilisé lors des premiers essais échouait ; choisir le chemin Intel et préparer son pont Steam a permis le lancement fonctionnel. Cela ne démontre pas une cause unique pour tous les échecs ARM, ni une compatibilité avec tous les Mac ou toutes les futures mises à jour.
+Steam API initialization and its signed-in state were also verified. The ARM/FEX route used during the first attempts failed; selecting the Intel route and preparing its Steam bridge allowed the game to launch successfully. This does not establish a single cause for every ARM failure or guarantee compatibility with every Mac or future update.
 
-**Les scripts ci-dessous sont une mise au propre du prototype utilisé.** La construction du patch est comparée au binaire du prototype ; la procédure complète avec une nouvelle installation reste à confirmer sur d’autres machines. Aucun remplacement des fichiers du jeu ou de son anti-triche n’est réalisé.
+**The scripts below are a cleaned-up version of the working prototype.** The rebuilt patch matches the prototype binary; the complete fresh-install procedure still needs confirmation on other machines. No game files or anti-cheat files are replaced.
 
-## Prérequis
+## Requirements
 
-1. Un Mac Apple Silicon avec Rosetta installé.
-2. Une installation légitime de CrossOver Preview **27.0.0.41069 du 6 octobre 2026**. Le constructeur refuse une autre DLL : le patch est spécifique à cette version. Obtenir CrossOver sur [CodeWeavers](https://www.codeweavers.com/preview/).
-3. [NotProton](https://github.com/NotProtonNot/NotProton) installé et configuré avec ce moteur CrossOver. Son dossier de support doit contenir `runners/current` et `bridge`, dont `bridge/x86_64-unix/lsteamclient.so`.
-4. Steam **natif pour macOS**, déjà connecté, avec AION 2 installé et l’outil de compatibilité NotProton sélectionné pour le jeu. Accepter soi-même les éventuelles conditions et demandes de connexion dans Steam.
-5. Python 3.10 ou ultérieur, les outils de ligne de commande Apple (`xcode-select --install`) et LLVM fournissant `ld.lld` et `llvm-objcopy`.
+1. An Apple Silicon Mac with Rosetta installed.
+2. A legitimate installation of CrossOver Preview **27.0.0.41069, dated October 6, 2026**. The builder rejects other DLLs because the patch is version-specific. Get CrossOver from [CodeWeavers](https://www.codeweavers.com/preview/).
+3. [NotProton](https://github.com/NotProtonNot/NotProton), installed and configured with that CrossOver engine. Its support directory must contain `runners/current` and `bridge`, including `bridge/x86_64-unix/lsteamclient.so`.
+4. **Native Steam for macOS**, already signed in, with AION 2 installed and the NotProton compatibility tool selected for the game. Handle any terms or sign-in prompts yourself in Steam.
+5. Python 3.10 or newer, Apple's command-line tools (`xcode-select --install`), and LLVM tools providing `ld.lld` and `llvm-objcopy`.
 
-Avec Homebrew, LLVM peut être installé par `brew install llvm lld`. Si les exécutables ne sont pas dans le même dossier, ajouter les deux dossiers à `PATH` puis omettre `--llvm-bin` ci-dessous. L’essai original utilisait les outils `ld.lld` et `llvm-objcopy` de llvm-mingw 20261006 ; un résultat différent avec un autre compilateur sera signalé.
+With Homebrew, install the LLVM tools using `brew install llvm lld`. If the executables are in different directories, add both directories to `PATH` and omit `--llvm-bin` below. The original experiment used `ld.lld` and `llvm-objcopy` from llvm-mingw 20261006; output produced with another compiler may differ and will be reported.
 
-## 1. Récupérer les scripts et construire le patch
+## 1. Download the scripts and build the patch
 
 ```sh
 git clone https://github.com/SamiCakiral/Aion2MacBridge.git
@@ -43,74 +43,74 @@ python3 -m venv .venv
 .venv/bin/python build_patch.py --llvm-bin "$(brew --prefix llvm)/bin"
 ```
 
-Si `ld.lld` a été installé séparément, utiliser plutôt :
+If `ld.lld` was installed separately, use this instead:
 
 ```sh
 export PATH="$(brew --prefix llvm)/bin:$(brew --prefix lld)/bin:$PATH"
 .venv/bin/python build_patch.py
 ```
 
-La DLL CrossOver d’origine reste dans l’application et n’est pas modifiée pendant cette étape. La DLL modifiée est produite **sur votre Mac** dans `build/ntdll.dll` ; elle n’est pas distribuée sur GitHub.
+The original CrossOver DLL stays in the application and is not modified during this step. The patched DLL is built **locally on your Mac** at `build/ntdll.dll`; it is not distributed on GitHub.
 
-Le hash SHA-256 attendu du résultat testé est :
+The expected SHA-256 hash of the tested output is:
 
 ```text
 e5ef486376a9c2cac9ff0cac8867c96a8c85f725174363f754b92ca23f6fab56
 ```
 
-Si le constructeur indique que le résultat diffère, ne le considérer pas comme le binaire validé. Vérifier les versions des outils avant de lancer le jeu.
+If the builder reports a different result, do not treat it as the verified binary. Check your toolchain versions before launching the game. The launcher also rejects patches whose hash differs from the working build.
 
-## 2. Préparer la petite bouteille dédiée
+## 2. Prepare the small dedicated bottle
 
-Fermer les jeux et applications utilisant le **même moteur NotProton** avant cette étape. Garder Steam natif connecté. Ne pas ouvrir Steam Windows : une autre connexion au même compte peut remplacer la session native.
+Close games and applications using the **same NotProton engine** before this step. Keep native Steam signed in. Do not open Windows Steam: another sign-in to the same account can replace the native session.
 
 ```sh
 .venv/bin/python bridge.py setup
 ```
 
-Cette commande crée `~/Library/Application Support/Aion2MacBridge/pfx`, initialise Wine et y installe les composants du pont Steam déjà fournis par NotProton. Le prototype occupait environ **511 Mio** hors jeu ; l’espace nécessaire varie. Elle ne copie ni ne télécharge AION 2 et refuse de réinitialiser une bouteille existante.
+This creates `~/Library/Application Support/Aion2MacBridge/pfx`, initializes Wine, and installs the Steam bridge components already supplied by NotProton. The prototype used approximately **511 MiB**, excluding the game; actual space requirements may vary. It neither copies nor downloads AION 2 and refuses to reinitialize an existing bottle.
 
-Si le jeu était déjà installé dans une bouteille CrossOver et n’apparaît pas dans la bibliothèque native, le rendre accessible à Steam natif avant la suite. Sur la machine testée, le dossier `Steam/steamapps/common/AION2` était un lien symbolique vers l’installation CrossOver existante. Ce lien seul ne remplace pas l’enregistrement du jeu dans Steam : vérifier que Steam natif reconnaît l’installation avant de lancer une installation ou un téléchargement. Les scripts ne modifient pas cet enregistrement automatiquement.
+If the game is already installed in a CrossOver bottle but is missing from your native Steam library, make it accessible to native Steam before continuing. On the tested machine, `Steam/steamapps/common/AION2` was a symbolic link to the existing CrossOver installation. That link alone does not register the game with Steam: check that native Steam recognizes the installation before starting any installation or download. These scripts do not automatically change that registration.
 
-## 3. Jouer
+## 3. Play
 
-Avec Steam natif ouvert et connecté, lancer :
+With native Steam open and signed in, run:
 
 ```sh
 .venv/bin/python bridge.py capture
 .venv/bin/python bridge.py launch
 ```
 
-La première commande demande un lancement à Steam et récupère ses paramètres d’authentification récents dans un fichier local privé. Elle restaure ensuite le script NotProton d’origine. Si Steam affiche une boîte de dialogue, la traiter pendant cette étape, puis relancer `capture` si nécessaire.
+The first command requests a launch from Steam and captures its fresh authentication parameters in a private local file. It then restores the original NotProton script. If Steam displays a dialog, handle it during this step, then run `capture` again if necessary.
 
-La seconde démarre **le jeu existant** avec le moteur Intel de CrossOver et le pont Steam natif. Garder ce terminal ouvert pendant la partie. Pour une nouvelle session, refaire les deux commandes : les paramètres de lancement expirent et ne doivent pas être réutilisés le lendemain.
+The second command starts **your existing game installation** using CrossOver's Intel engine and the native Steam bridge. Keep this terminal open while playing. Repeat both commands for each new session: launch parameters expire and must not be reused the next day.
 
-La capture contient des données de connexion temporaires. **Ne jamais publier le dossier local d’état, les arguments de lancement ou les journaux privés.** Aucun de ces fichiers n’est stocké dans le dépôt.
+The capture contains temporary authentication data. **Never publish the local state directory, launch arguments, or private logs.** None of those files are stored in this repository.
 
-## Fonctionnement et restauration
+## How it works and how to restore the original files
 
-Le script prépare temporairement deux fichiers du moteur NotProton : la DLL x64 `ntdll.dll` modifiée et la bibliothèque x64 `lsteamclient.so`. La bouteille dédiée reçoit le pont Steam. Le jeu est ensuite exécuté directement par `lib/wine/x86_64-unix/wine`, évitant la sélection ARM automatique.
+The script temporarily stages two files in the NotProton engine: the patched x64 `ntdll.dll` and the x64 `lsteamclient.so` library. The dedicated bottle receives the Steam bridge. The game is then executed directly by `lib/wine/x86_64-unix/wine`, bypassing automatic ARM selection.
 
-Les fichiers du moteur sont sauvegardés avant modification et restaurés à la sortie normale, sur interruption du terminal et sur les erreurs prises en charge. **Ne pas lancer d’autres applications avec ce moteur pendant la partie.** Une coupure de courant ou un arrêt forcé peut empêcher la restauration automatique ; après avoir fermé le jeu, utiliser :
+The engine files are backed up before modification and restored on normal exit, terminal interruption, and handled errors. **Do not run other applications with this engine while playing.** A power loss or forced termination may prevent automatic restoration. After closing the game, run:
 
 ```sh
 .venv/bin/python bridge.py recover
 ```
 
-La restauration utilise une sauvegarde locale durable. Elle ne supprime pas la bouteille ni les sauvegardes du jeu. Ne pas lancer `recover` pendant une partie.
+Recovery uses a persistent local backup. It does not delete the bottle or game saves. Do not run `recover` during a game session.
 
-Pour utiliser des chemins différents, passer `--runner`, `--bridge`, `--prefix`, `--state` ou `--patch`. Utiliser les mêmes options pour `setup`, `capture`, `launch` et `recover`. Voir `bridge.py --help` et `build_patch.py --help`. Ne pas utiliser une bouteille ARM existante comme `--prefix` : la bouteille doit être initialisée avec le moteur Intel.
+To use different paths, pass `--runner`, `--bridge`, `--prefix`, `--state`, or `--patch`. Use the same options for `setup`, `capture`, `launch`, and `recover`. See `bridge.py --help` and `build_patch.py --help`. Do not use an existing ARM bottle as `--prefix`: the bottle must be initialized with the Intel engine.
 
-## Si le jeu ne démarre pas
+## Troubleshooting
 
-- **Steam ne fournit pas de lancement :** vérifier sa fenêtre et que NotProton est sélectionné pour AION 2. Un ancien lancement peut être encore actif ; l’arrêter depuis Steam avant de refaire `capture`. Ne pas se déconnecter du compte.
-- **DLL non prise en charge :** vérifier la version exacte de CrossOver Preview et utiliser sa DLL x64 d’origine pour construire le patch.
-- **Transaction inachevée :** fermer le jeu puis exécuter `recover` avec les mêmes chemins.
-- **Bouteille déjà existante :** ne pas refaire `setup` ; utiliser `capture` puis `launch`. Si la préparation initiale a échoué, conserver ses journaux et examiner le problème avant de recréer une bouteille.
-- **Crash :** les journaux locaux sont dans `~/Library/Application Support/Aion2MacBridge/state`. Les examiner localement ; retirer les identifiants et paramètres d’authentification de tout extrait partagé.
+- **Steam does not provide a launch:** check its window and confirm that NotProton is selected for AION 2. An earlier launch may still be active; stop it through Steam before running `capture` again. Do not sign out of your account.
+- **Unsupported DLL:** check the exact CrossOver Preview version and use its original x64 DLL to build the patch.
+- **Unfinished transaction:** close the game, then run `recover` with the same paths.
+- **Bottle already exists:** do not rerun `setup`; use `capture`, then `launch`. If the initial setup failed, preserve its logs and investigate before recreating the bottle.
+- **Crash:** local logs are stored in `~/Library/Application Support/Aion2MacBridge/state`. Inspect them locally and remove identifiers and authentication parameters from any excerpts you share.
 
-## Crédits et licence
+## Credits and license
 
-Le pont Steam et le détournement du chargeur viennent de **NotProton**, sans lequel cette solution n’existerait pas. L’apport de ce dépôt est la construction du patch Intel avec la convention d’appel Windows explicite et l’orchestration de la configuration qui a fonctionné pour AION 2.
+The Steam bridge and loader detour come from **NotProton**, without which this solution would not exist. This repository contributes the Intel patch build with an explicit Windows calling convention and the scripts that orchestrate the configuration that worked for AION 2.
 
-Voir [NOTICE.md](NOTICE.md) pour le commit d’origine et la provenance des fichiers. Code distribué sous **GPL-3.0** ; voir [LICENSE](LICENSE). CrossOver, Steam, Rosetta et AION 2 restent des dépendances externes.
+See [NOTICE.md](NOTICE.md) for the upstream commit and file provenance. Code is distributed under **GPL-3.0**; see [LICENSE](LICENSE). CrossOver, Steam, Rosetta, and AION 2 remain external dependencies.
